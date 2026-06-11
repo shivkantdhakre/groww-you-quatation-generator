@@ -55,9 +55,9 @@ const styles = StyleSheet.create({
     zIndex: 100
   },
   logo: {
-    width: 220,
+    maxWidth: 220,
     height: 68,
-    objectFit: 'contain'
+    alignSelf: 'flex-start'
   },
   logoText: {
     fontSize: 18,
