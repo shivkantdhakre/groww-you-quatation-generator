@@ -1,7 +1,9 @@
 {
-  "name": "temp-vite",
+  "name": "groww-you-quotation-generator",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "React-based vector service quotation generator with live 1:1 PDF preview for Groww You.",
+  "author": "Groww You",
   "type": "module",
   "scripts": {
     "dev": "vite",
