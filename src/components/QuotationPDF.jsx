@@ -258,51 +258,51 @@ export default function QuotationPDF({ data }) {
 
   return (
     <Document>
-      {/* PAGE 1 */}
-      <Page size="A4" style={styles.page}>
-        {/* Background Waves */}
-        <Svg viewBox="0 0 500 200" style={styles.topWave} preserveAspectRatio="none">
-          <Path d="M 180 0 C 300 120, 400 90, 500 160 L 500 0 Z" fill="#F5A623" />
-          <Path d="M 220 0 C 330 100, 420 70, 500 130 L 500 0 Z" fill="#0B2E59" />
-        </Svg>
-
-        <Svg viewBox="0 0 800 180" style={styles.bottomWave} preserveAspectRatio="none">
-          <Path d="M 0 180 L 0 110 C 150 70, 300 170, 500 130 C 650 90, 720 100, 800 60 L 800 180 Z" fill="#F5A623" />
-          <Path d="M 0 180 L 0 180 C 150 180, 300 180, 500 160 C 650 130, 720 130, 800 90 L 800 180 Z" fill="#0B2E59" />
-        </Svg>
-
-        {/* Watermark */}
-        <Text style={styles.watermark}>GROWW YOU</Text>
-
-        {/* Header Block */}
-        <View style={styles.header}>
-          <View>
-            {data.company?.logo ? (
-              <Image src={data.company.logo} style={styles.logo} />
-            ) : (
-              <Text style={styles.logoText}>GROWW YOU</Text>
-            )}
-          </View>
-          <View style={styles.headerContact}>
-            <View style={styles.contactRow}>
-              <Text style={{ textDecoration: 'underline' }}>{data.company?.website || 'www.growwyou.com'}</Text>
-              <GlobeIcon />
+      <Page size="A4" style={styles.page} wrap>
+        
+        {/* 1. FIXED ELEMENTS: Background waves, watermark, and header must repeat on every page and render FIRST */}
+        <View fixed style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 }}>
+          <Svg viewBox="0 0 500 200" style={styles.topWave} preserveAspectRatio="none">
+            <Path d="M 180 0 C 300 120, 400 90, 500 160 L 500 0 Z" fill="#F5A623" />
+            <Path d="M 220 0 C 330 100, 420 70, 500 130 L 500 0 Z" fill="#0B2E59" />
+          </Svg>
+          <Svg viewBox="0 0 800 180" style={styles.bottomWave} preserveAspectRatio="none">
+            <Path d="M 0 180 L 0 110 C 150 70, 300 170, 500 130 C 650 90, 720 100, 800 60 L 800 180 Z" fill="#F5A623" />
+            <Path d="M 0 180 L 0 180 C 150 180, 300 180, 500 160 C 650 130, 720 130, 800 90 L 800 180 Z" fill="#0B2E59" />
+          </Svg>
+          <Text style={styles.watermark}>GROWW YOU</Text>
+          
+          <View style={styles.header}>
+            <View>
+              {data.company?.logo ? (
+                <Image src={data.company.logo} style={styles.logo} />
+              ) : (
+                <Text style={styles.logoText}>GROWW YOU</Text>
+              )}
             </View>
-            <View style={styles.contactRow}>
-              <Text style={{ textDecoration: 'underline' }}>{data.company?.email || 'info@growwyou.com'}</Text>
-              <MailIcon />
+            <View style={styles.headerContact}>
+              <View style={styles.contactRow}>
+                <Text style={{ textDecoration: 'underline' }}>{data.company?.website || 'www.growwyou.com'}</Text>
+                <GlobeIcon />
+              </View>
+              <View style={styles.contactRow}>
+                <Text style={{ textDecoration: 'underline' }}>{data.company?.email || 'info@growwyou.com'}</Text>
+                <MailIcon />
+              </View>
+              <Text style={{ color: '#0B2E59' }}>{data.company?.phone || '+91 7351700020'}</Text>
             </View>
-            <Text style={{ color: '#0B2E59' }}>{data.company?.phone || '+91 7351700020'}</Text>
           </View>
         </View>
 
-        {/* Document Content */}
+        {/* 2. DYNAMIC CONTENT: Flows naturally across pages as list height grows */}
         <View style={styles.titleBar}>
           <Text style={styles.title}>{data.meta?.subject || 'SERVICE QUOTATION'}</Text>
           <Text style={styles.subtitle}>Company Name : {data.meta?.companySubtitle || 'Groww You - Software Development & Marketing'}</Text>
         </View>
 
-        <Text style={styles.introText}>{data.meta?.introText || 'As per our discussion...'}</Text>
+        {data.company?.introMessage && (
+          <Text style={styles.introText}>{data.company.introMessage}</Text>
+        )}
         <View style={styles.divider} />
 
         {/* Metadata List */}
@@ -360,89 +360,54 @@ export default function QuotationPDF({ data }) {
             </View>
           </View>
         )}
-      </Page>
 
-      {/* PAGE 2 */}
-      <Page size="A4" style={styles.page}>
-        {/* Background Waves */}
-        <Svg viewBox="0 0 500 200" style={styles.topWave} preserveAspectRatio="none">
-          <Path d="M 180 0 C 300 120, 400 90, 500 160 L 500 0 Z" fill="#F5A623" />
-          <Path d="M 220 0 C 330 100, 420 70, 500 130 L 500 0 Z" fill="#0B2E59" />
-        </Svg>
-
-        <Svg viewBox="0 0 800 180" style={styles.bottomWave} preserveAspectRatio="none">
-          <Path d="M 0 180 L 0 110 C 150 70, 300 170, 500 130 C 650 90, 720 100, 800 60 L 800 180 Z" fill="#F5A623" />
-          <Path d="M 0 180 L 0 180 C 150 180, 300 180, 500 160 C 650 130, 720 130, 800 90 L 800 180 Z" fill="#0B2E59" />
-        </Svg>
-
-        {/* Watermark */}
-        <Text style={styles.watermark}>GROWW YOU</Text>
-
-        {/* Header Block */}
-        <View style={styles.header}>
-          <View>
-            {data.company?.logo ? (
-              <Image src={data.company.logo} style={styles.logo} />
-            ) : (
-              <Text style={styles.logoText}>GROWW YOU</Text>
-            )}
-          </View>
-          <View style={styles.headerContact}>
-            <View style={styles.contactRow}>
-              <Text style={{ textDecoration: 'underline' }}>{data.company?.website || 'www.growwyou.com'}</Text>
-              <GlobeIcon />
-            </View>
-            <View style={styles.contactRow}>
-              <Text style={{ textDecoration: 'underline' }}>{data.company?.email || 'info@growwyou.com'}</Text>
-              <MailIcon />
-            </View>
-            <Text style={{ color: '#0B2E59' }}>{data.company?.phone || '+91 7351700020'}</Text>
-          </View>
-        </View>
-
-        {/* Document Content */}
-        <View style={styles.titleBar}>
-          <Text style={styles.title}>{data.meta?.subject || 'SERVICE QUOTATION'}</Text>
-          <Text style={styles.subtitle}>Company Name : {data.meta?.companySubtitle || 'Groww You - Software Development & Marketing'}</Text>
-        </View>
-
-        <Text style={styles.introText}>{data.meta?.introText || 'As per our discussion...'}</Text>
-        <View style={styles.divider} />
-
-        {/* Total Quotation */}
-        <Text style={styles.pricingTitle}>Total Quotation :</Text>
-        <Text style={styles.pricingValue}>
-          Total Service Cost: {formatCurrencyValue(computedGrandTotal, currency)} {data.meta?.priceUnit || ''}
-        </Text>
-
-        {/* Payment Terms */}
-        <View style={styles.paymentTitleRow}>
-          <CreditCardIcon />
-          <Text>Payment Terms :</Text>
-        </View>
-
-        {data.terms && data.terms.filter(t => t.milestone).length > 0 && (
-          <View style={styles.listContainer}>
-            {data.terms.filter(t => t.milestone).map((term, idx) => (
-              <View key={idx} style={styles.listItemRow}>
-                <View style={styles.listDot} />
-                <Text>
-                  {term.milestone} {term.percentage > 0 ? `(${term.percentage}%)` : ''}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Regards and Signature Block */}
-        <View style={styles.regardsSection}>
-          <Text style={styles.regardsText}>Regards,</Text>
-          <Text style={styles.regardsName}>{data.meta?.regardsName || 'Amit Bhardwaj'}</Text>
-          <Text style={styles.regardsText}>
-            {data.meta?.regardsTitle || 'Director, Groww You'}, {data.meta?.regardsCompany || 'Groww You'}
+        {/* 3. PROTECTED BLOCK: wrap={false} prevents this section from splitting across pages */}
+        <View wrap={false} style={{ marginTop: 20 }}>
+          <Text style={styles.pricingTitle}>Total Quotation :</Text>
+          <Text style={styles.pricingValue}>
+            Total Service Cost: {formatCurrencyValue(computedGrandTotal, currency)} {data.meta?.priceUnit || ''}
           </Text>
-          <Image src={signatureImg} style={styles.signatureImg} />
-          <View style={styles.signatureLine} />
+
+          <View style={styles.paymentTitleRow}>
+            <CreditCardIcon />
+            <Text>Payment Terms :</Text>
+          </View>
+
+          {data.terms && data.terms.filter(t => t.milestone).length > 0 && (
+            <View style={styles.listContainer}>
+              {data.terms.filter(t => t.milestone).map((term, idx) => (
+                <View key={idx} style={styles.listItemRow}>
+                  <View style={styles.listDot} />
+                  <Text>
+                    {term.milestone} {term.percentage > 0 ? `(${term.percentage}%)` : ''}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Terms & Conditions Section */}
+          {data.meta?.paymentNotes && (
+            <View style={{ marginTop: 16 }}>
+              <Text style={{ fontSize: 10.5, fontWeight: 'bold', color: '#0B2E59', marginBottom: 5 }}>
+                Terms & Conditions :
+              </Text>
+              <Text style={{ fontSize: 9, color: '#0B2E59', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                {data.meta.paymentNotes}
+              </Text>
+            </View>
+          )}
+
+          {/* Regards and Signature Block */}
+          <View style={[styles.regardsSection, { marginTop: 40 }]}>
+            <Text style={styles.regardsText}>Regards,</Text>
+            <Text style={styles.regardsName}>{data.meta?.regardsName || 'Amit Bhardwaj'}</Text>
+            <Text style={styles.regardsText}>
+              {data.meta?.regardsTitle || 'Director'}, {data.meta?.regardsCompany || 'Groww You'}
+            </Text>
+            <Image src={signatureImg} style={styles.signatureImg} />
+            <View style={styles.signatureLine} />
+          </View>
         </View>
       </Page>
     </Document>

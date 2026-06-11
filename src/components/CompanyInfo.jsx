@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Building2, Globe, Mail, Phone, Upload } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, Upload, FileText } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 
 export default function CompanyInfo() {
@@ -24,6 +24,21 @@ export default function CompanyInfo() {
       <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
         <Building2 className="w-5 h-5 text-groww-orange" />
         <h3 className="text-sm font-bold tracking-wider text-groww-navy uppercase">Company Header Information</h3>
+      </div>
+
+      <div>
+        <label className="block text-xs font-semibold text-slate-600 mb-1">Quotation Subject</label>
+        <div className="relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <FileText className="w-4 h-4" />
+          </span>
+          <input
+            type="text"
+            placeholder="e.g. SERVICE QUOTATION"
+            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-groww-orange"
+            {...register('meta.subject')}
+          />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -81,6 +96,15 @@ export default function CompanyInfo() {
           </div>
           {errors.company?.phone && <p className="text-red-500 text-[10px] mt-0.5">{errors.company.phone.message}</p>}
         </div>
+      </div>
+
+      <div className="pt-2">
+        <label className="block text-xs font-semibold text-slate-600 mb-1">Introduction Message</label>
+        <textarea
+          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-groww-orange min-h-[80px]"
+          placeholder="As per our discussion..."
+          {...register('company.introMessage')}
+        />
       </div>
 
       <div>

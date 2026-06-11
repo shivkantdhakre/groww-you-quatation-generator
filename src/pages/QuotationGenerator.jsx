@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useForm, FormProvider, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,7 +24,8 @@ const quotationSchema = z.object({
     website: z.string().min(1, "Website is required"),
     email: z.string().email("Invalid email address"),
     phone: z.string().min(1, "Contact Number is required"),
-    logo: z.string().nullable()
+    logo: z.string().nullable(),
+    introMessage: z.string().optional()
   }),
   client: z.object({
     name: z.string().min(1, "Client Name is required"),
@@ -36,10 +37,12 @@ const quotationSchema = z.object({
   meta: z.object({
     quoteNumber: z.string().min(1, "Invoice ID is required"),
     date: z.string().min(1, "Date is required"),
+    subject: z.string().optional(),
     serviceType: z.string().min(1, "Service Type is required"),
     issuedBy: z.string().min(1, "Issued By is required"),
     currency: z.enum(["INR", "USD", "EUR"]),
-    priceUnit: z.string().optional()
+    priceUnit: z.string().optional(),
+    paymentNotes: z.string().optional()
   }),
   project: z.object({
     items: z.array(z.object({
@@ -69,6 +72,7 @@ const createInitialState = () => ({
     email: 'info@growwyou.com',
     phone: '+91 7351700020',
     logo: null,
+    introMessage: 'Dear Client,\nAs per our discussion, we are pleased to present this quotation for the services outlined below. We are confident that our team at Groww You can deliver exceptional results that will help accelerate your business growth.'
   },
   client: {
     name: '',
@@ -81,10 +85,12 @@ const createInitialState = () => ({
   meta: {
     quoteNumber: generateQuotationNumber(),
     date: new Date().toISOString().split('T')[0],
+    subject: 'SERVICE QUOTATION',
     serviceType: 'Digital Enterprise Scope',
     issuedBy: 'Groww You',
     currency: 'INR',
-    priceUnit: '/ month'
+    priceUnit: '/ month',
+    paymentNotes: '1. This quotation is valid for 15 days from the date of issue.\n2. All prices are exclusive of applicable taxes (18% GST).\n3. Payment must be made via bank transfer or UPI.\n4. Work will commence only after receiving the advance payment.\n5. Source files and deliverables will be handed over upon full and final payment.\n6. Any additional requirements beyond the scope mentioned above will be quoted separately.'
   },
   project: {
     items: defaultProjectItems.map(name => ({ name }))
@@ -104,25 +110,43 @@ export default function QuotationGenerator() {
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Deep-merge saved data with defaults so newly added fields are backfilled
+  const defaults = createInitialState();
+  const mergedDefaults = storedData ? {
+    ...defaults,
+    ...storedData,
+    company: { ...defaults.company, ...storedData.company },
+    client: { ...defaults.client, ...storedData.client },
+    meta: { ...defaults.meta, ...storedData.meta },
+    project: storedData.project || defaults.project,
+    page1: { ...defaults.page1, ...storedData.page1 },
+    pricing: { ...defaults.pricing, ...storedData.pricing },
+    terms: storedData.terms || defaults.terms
+  } : defaults;
+
   const methods = useForm({
     resolver: zodResolver(quotationSchema),
-    defaultValues: storedData || createInitialState(),
+    defaultValues: mergedDefaults,
     mode: 'onChange'
   });
 
   const { watch, reset, setValue, control, trigger, formState: { isValid } } = methods;
 
-  // Save changes to localStorage on any form input via subscription to avoid infinite loop
-  useEffect(() => {
-    const subscription = watch((value) => {
-      setStoredData(value);
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, setStoredData]);
-
   // Debounce inputs for PDFViewer rendering to prevent lag
   const watchedValuesForDebounce = useWatch({ control });
-  const debouncedData = useDebounce(watchedValuesForDebounce, 1200);
+  const debouncedData = useDebounce(watchedValuesForDebounce, 1500);
+
+  // Detect when live form data has changed but debounce hasn't settled yet
+  const watchedJSON = useMemo(() => JSON.stringify(watchedValuesForDebounce), [watchedValuesForDebounce]);
+  const debouncedJSON = useMemo(() => JSON.stringify(debouncedData), [debouncedData]);
+  const isRegenerating = watchedJSON !== debouncedJSON;
+
+  // Save changes to localStorage via debounced data to avoid typing lag
+  useEffect(() => {
+    if (debouncedData && Object.keys(debouncedData).length > 0 && debouncedData.company) {
+      setStoredData(debouncedData);
+    }
+  }, [debouncedData, setStoredData]);
 
   const handleReset = () => {
     if (window.confirm("Purge application values and reload defaults?")) {
@@ -168,8 +192,15 @@ export default function QuotationGenerator() {
         URL.revokeObjectURL(url);
       }, 1000);
 
-      // Increment serial index and save to storage
-      const nextCount = Number(localStorage.getItem('qCount') || 111) + 1;
+      // Extract current count from form state to prevent dropping back to 111 on cache clear
+      const currentQuoteNum = watch('meta.quoteNumber') || '';
+      const match = currentQuoteNum.match(/-(\d+)$/);
+      let nextCount = 112;
+      if (match) {
+        nextCount = Number(match[1]) + 1;
+      } else {
+        nextCount = Number(localStorage.getItem('qCount') || 111) + 1;
+      }
       localStorage.setItem('qCount', nextCount);
       
       // Update quotation number in form
@@ -216,10 +247,10 @@ export default function QuotationGenerator() {
               type="button"
               onClick={handleDownload}
               disabled={isGenerating}
-              className={`flex items-center gap-1.5 px-5 py-2 text-white font-bold text-xs rounded-xl shadow-md transition-all ${
+              className={`flex items-center gap-1.5 px-5 py-2 font-bold text-xs rounded-xl shadow-md transition-all ${
                 isGenerating 
-                  ? 'bg-slate-300 cursor-not-allowed opacity-60' 
-                  : 'bg-groww-navy hover:bg-groww-dark cursor-pointer'
+                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed' 
+                  : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
               }`}
             >
               <FileDown className="w-3.5 h-3.5" /> 
@@ -266,10 +297,10 @@ export default function QuotationGenerator() {
                 type="button"
                 onClick={handleDownload}
                 disabled={isGenerating}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 text-white font-bold text-xs rounded-xl shadow-md transition-all ${
+                className={`flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 font-bold text-xs rounded-xl shadow-md transition-all ${
                   isGenerating 
-                    ? 'bg-slate-300 cursor-not-allowed opacity-60' 
-                    : 'bg-groww-navy hover:bg-groww-dark cursor-pointer'
+                    ? 'bg-slate-200 text-slate-500 cursor-not-allowed' 
+                    : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
                 }`}
               >
                 <FileDown className="w-3.5 h-3.5" /> 
@@ -280,15 +311,32 @@ export default function QuotationGenerator() {
 
           {/* Direct IFrame PDF Preview Panel */}
           <section className="lg:col-span-7 bg-slate-300 p-6 flex items-start justify-center lg:max-h-[calc(100vh-73px)] lg:overflow-y-auto border-t lg:border-t-0 lg:border-l border-slate-200">
-            <div className="w-full h-full min-h-[600px] max-lg:pointer-events-none bg-slate-200 rounded-2xl overflow-hidden shadow-inner border border-slate-300 flex items-center justify-center">
+            <div className="w-full h-full min-h-[600px] max-lg:pointer-events-none bg-slate-200 rounded-2xl overflow-hidden shadow-inner border border-slate-300 flex items-center justify-center relative">
               {debouncedData && debouncedData.company ? (
-                <PDFViewer style={{ width: '100%', height: '100%', border: 'none' }}>
-                  <QuotationPDF data={debouncedData} />
-                </PDFViewer>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: isRegenerating ? 0.4 : 1,
+                    transition: 'opacity 0.3s ease-in-out',
+                  }}
+                >
+                  <PDFViewer style={{ width: '100%', height: '100%', border: 'none' }}>
+                    <QuotationPDF data={debouncedData} />
+                  </PDFViewer>
+                </div>
               ) : (
                 <div className="text-slate-500 text-sm font-semibold flex items-center gap-2">
                   <RefreshCw className="animate-spin w-4 h-4 text-groww-orange" />
                   <span>Preparing document engine...</span>
+                </div>
+              )}
+              {isRegenerating && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow-md">
+                    <RefreshCw className="animate-spin w-4 h-4 text-groww-orange" />
+                    <span className="text-xs font-semibold text-slate-600">Updating preview...</span>
+                  </div>
                 </div>
               )}
             </div>
