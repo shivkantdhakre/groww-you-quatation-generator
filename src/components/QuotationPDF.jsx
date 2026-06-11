@@ -261,12 +261,12 @@ export default function QuotationPDF({ data }) {
       {/* PAGE 1 */}
       <Page size="A4" style={styles.page}>
         {/* Background Waves */}
-        <Svg viewBox="0 0 500 200" style={styles.topWave}>
+        <Svg viewBox="0 0 500 200" style={styles.topWave} preserveAspectRatio="none">
           <Path d="M 180 0 C 300 120, 400 90, 500 160 L 500 0 Z" fill="#F5A623" />
           <Path d="M 220 0 C 330 100, 420 70, 500 130 L 500 0 Z" fill="#0B2E59" />
         </Svg>
 
-        <Svg viewBox="0 0 800 180" style={styles.bottomWave}>
+        <Svg viewBox="0 0 800 180" style={styles.bottomWave} preserveAspectRatio="none">
           <Path d="M 0 180 L 0 110 C 150 70, 300 170, 500 130 C 650 90, 720 100, 800 60 L 800 180 Z" fill="#F5A623" />
           <Path d="M 0 180 L 0 180 C 150 180, 300 180, 500 160 C 650 130, 720 130, 800 90 L 800 180 Z" fill="#0B2E59" />
         </Svg>
@@ -365,12 +365,12 @@ export default function QuotationPDF({ data }) {
       {/* PAGE 2 */}
       <Page size="A4" style={styles.page}>
         {/* Background Waves */}
-        <Svg viewBox="0 0 500 200" style={styles.topWave}>
+        <Svg viewBox="0 0 500 200" style={styles.topWave} preserveAspectRatio="none">
           <Path d="M 180 0 C 300 120, 400 90, 500 160 L 500 0 Z" fill="#F5A623" />
           <Path d="M 220 0 C 330 100, 420 70, 500 130 L 500 0 Z" fill="#0B2E59" />
         </Svg>
 
-        <Svg viewBox="0 0 800 180" style={styles.bottomWave}>
+        <Svg viewBox="0 0 800 180" style={styles.bottomWave} preserveAspectRatio="none">
           <Path d="M 0 180 L 0 110 C 150 70, 300 170, 500 130 C 650 90, 720 100, 800 60 L 800 180 Z" fill="#F5A623" />
           <Path d="M 0 180 L 0 180 C 150 180, 300 180, 500 160 C 650 130, 720 130, 800 90 L 800 180 Z" fill="#0B2E59" />
         </Svg>

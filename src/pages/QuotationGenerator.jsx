@@ -50,12 +50,12 @@ const quotationSchema = z.object({
     platformsCovered: z.string().min(1, "Platforms Covered is required")
   }),
   pricing: z.object({
-    totalAmount: z.number({ invalid_type_error: "Must be a number" }).positive("Must be greater than 0"),
-    taxPercentage: z.number({ invalid_type_error: "Must be a number" }).min(0, "Tax cannot be negative")
+    totalAmount: z.coerce.number().positive("Must be greater than 0"),
+    taxPercentage: z.coerce.number().min(0, "Tax cannot be negative")
   }),
   terms: z.array(z.object({
-    percentage: z.number({ invalid_type_error: "Must be a number" }).min(0).max(100),
-    milestone: z.string()
+    percentage: z.coerce.number().min(0).max(100),
+    milestone: z.string().min(1, "Milestone name is required")
   })).refine((terms) => {
     const sum = terms.reduce((acc, curr) => acc + (Number(curr.percentage) || 0), 0);
     return sum === 100;
@@ -110,7 +110,7 @@ export default function QuotationGenerator() {
     mode: 'onChange'
   });
 
-  const { watch, reset, setValue, control, formState: { isValid } } = methods;
+  const { watch, reset, setValue, control, trigger, formState: { isValid } } = methods;
 
   // Save changes to localStorage on any form input via subscription to avoid infinite loop
   useEffect(() => {
@@ -122,7 +122,7 @@ export default function QuotationGenerator() {
 
   // Debounce inputs for PDFViewer rendering to prevent lag
   const watchedValuesForDebounce = useWatch({ control });
-  const debouncedData = useDebounce(watchedValuesForDebounce, 500);
+  const debouncedData = useDebounce(watchedValuesForDebounce, 1200);
 
   const handleReset = () => {
     if (window.confirm("Purge application values and reload defaults?")) {
@@ -144,6 +144,13 @@ export default function QuotationGenerator() {
 
   // On-demand PDF Generation and download trigger
   const handleDownload = async () => {
+    // Run full validation to highlight missing/invalid fields on screen
+    const isFormValid = await trigger();
+    if (!isFormValid) {
+      alert("Please fix all form validation errors before exporting.");
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const currentData = watch();
@@ -156,8 +163,10 @@ export default function QuotationGenerator() {
       link.download = `Quotation_${currentData.meta.quoteNumber}.pdf`;
       link.click();
       
-      // Revoke URL object to clean memory
-      URL.revokeObjectURL(url);
+      // Revoke URL object with a 1000ms delay to prevent Safari/iOS mid-stream cancellation
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
 
       // Increment serial index and save to storage
       const nextCount = Number(localStorage.getItem('qCount') || 111) + 1;
@@ -198,7 +207,7 @@ export default function QuotationGenerator() {
             <button
               type="button"
               onClick={handleCopySerial}
-              className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              className="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all w-[130px]"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <RefreshCw className="w-3.5 h-3.5 hidden" />}
               {copied ? 'Copied ID' : 'Copy Invoice ID'}
@@ -206,11 +215,11 @@ export default function QuotationGenerator() {
             <button
               type="button"
               onClick={handleDownload}
-              disabled={!isValid || isGenerating}
+              disabled={isGenerating}
               className={`flex items-center gap-1.5 px-5 py-2 text-white font-bold text-xs rounded-xl shadow-md transition-all ${
-                isValid && !isGenerating 
-                  ? 'bg-groww-navy hover:bg-groww-dark cursor-pointer' 
-                  : 'bg-slate-300 cursor-not-allowed opacity-60'
+                isGenerating 
+                  ? 'bg-slate-300 cursor-not-allowed opacity-60' 
+                  : 'bg-groww-navy hover:bg-groww-dark cursor-pointer'
               }`}
             >
               <FileDown className="w-3.5 h-3.5" /> 
@@ -220,13 +229,13 @@ export default function QuotationGenerator() {
         </header>
 
         {/* Main Workspace Frame */}
-        <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+        <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 lg:overflow-hidden">
           {/* Forms Field Panel Container */}
-          <section className="lg:col-span-5 p-6 overflow-y-auto space-y-6 max-h-[calc(100vh-73px)] no-print">
+          <section className="lg:col-span-5 p-6 space-y-6 lg:max-h-[calc(100vh-73px)] lg:overflow-y-auto no-print">
             {!isValid && (
               <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-semibold">
                 <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <span>Fill in all required fields and ensure payment milestones sum up to exactly 100% to enable PDF downloads.</span>
+                <span>Fill in all required fields and ensure payment milestones sum up to exactly 100% to download the PDF document.</span>
               </div>
             )}
             
@@ -235,11 +244,43 @@ export default function QuotationGenerator() {
             <ProjectDetails />
             <PricingSection />
             <PaymentTerms />
+
+            {/* Bottom Actions Panel for easy access on all screens, especially mobile */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-200 no-print">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Clear All Values
+              </button>
+              <button
+                type="button"
+                onClick={handleCopySerial}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all sm:w-[130px] cursor-pointer"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <RefreshCw className="w-3.5 h-3.5 hidden" />}
+                {copied ? 'Copied ID' : 'Copy Invoice ID'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={isGenerating}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-5 py-2.5 text-white font-bold text-xs rounded-xl shadow-md transition-all ${
+                  isGenerating 
+                    ? 'bg-slate-300 cursor-not-allowed opacity-60' 
+                    : 'bg-groww-navy hover:bg-groww-dark cursor-pointer'
+                }`}
+              >
+                <FileDown className="w-3.5 h-3.5" /> 
+                {isGenerating ? 'Compiling PDF...' : 'Download Document PDF'}
+              </button>
+            </div>
           </section>
 
           {/* Direct IFrame PDF Preview Panel */}
-          <section className="lg:col-span-7 bg-slate-300 p-6 overflow-y-auto flex items-start justify-center max-h-[calc(100vh-73px)] border-l border-slate-200">
-            <div className="w-full h-full min-h-[600px] bg-slate-200 rounded-2xl overflow-hidden shadow-inner border border-slate-300 flex items-center justify-center">
+          <section className="lg:col-span-7 bg-slate-300 p-6 flex items-start justify-center lg:max-h-[calc(100vh-73px)] lg:overflow-y-auto border-t lg:border-t-0 lg:border-l border-slate-200">
+            <div className="w-full h-full min-h-[600px] max-lg:pointer-events-none bg-slate-200 rounded-2xl overflow-hidden shadow-inner border border-slate-300 flex items-center justify-center">
               {debouncedData && debouncedData.company ? (
                 <PDFViewer style={{ width: '100%', height: '100%', border: 'none' }}>
                   <QuotationPDF data={debouncedData} />

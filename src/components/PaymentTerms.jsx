@@ -51,7 +51,13 @@ export default function PaymentTerms() {
       ) : (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs font-medium">
           <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-          <span>Current total is {totalPercentage}%. Milestone percentages must sum up to exactly 100% (disable download until fixed).</span>
+          <span>
+            Current total is {totalPercentage}%. 
+            {100 - totalPercentage > 0 
+              ? ` (Need ${100 - totalPercentage}% more)` 
+              : ` (Over by ${totalPercentage - 100}%)`}
+            . Milestone percentages must sum up to exactly 100% (disable download until fixed).
+          </span>
         </div>
       )}
 
@@ -66,38 +72,54 @@ export default function PaymentTerms() {
           const milestoneAmount = Number(totalAmount) * (Number(currentPercentage) / 100);
 
           return (
-            <div key={field.id} className="flex flex-col md:flex-row gap-2 items-start md:items-center group">
-              <span className="text-xs font-bold text-slate-400 w-5 text-center hidden md:inline">•</span>
-              
-              <input
-                type="text"
-                className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-groww-orange w-full"
-                placeholder="e.g. Advance (Project Start)"
-                {...register(`terms.${index}.milestone`)}
-              />
-
-              <div className="flex gap-2 items-center w-full md:w-auto">
-                <div className="relative w-24">
+            <div key={field.id} className="flex flex-col gap-1.5 p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition-all bg-slate-50/50 group">
+              <div className="flex flex-col md:flex-row gap-2 items-start md:items-center">
+                <span className="text-xs font-bold text-slate-400 w-5 text-center hidden md:inline">•</span>
+                
+                <div className="flex-1 w-full">
                   <input
-                    type="number"
-                    className="w-full pr-6 pl-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-groww-orange"
-                    placeholder="50"
-                    {...register(`terms.${index}.percentage`, { valueAsNumber: true })}
+                    type="text"
+                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white ${
+                      errors.terms?.[index]?.milestone ? 'border-red-300 focus:border-red-500' : 'border-slate-200 focus:border-groww-orange'
+                    }`}
+                    placeholder="e.g. Advance (Project Start)"
+                    {...register(`terms.${index}.milestone`)}
                   />
-                  <span className="absolute inset-y-0 right-3 flex items-center text-slate-400 text-xs font-semibold">%</span>
                 </div>
 
-                <div className="text-xs font-semibold text-slate-500 min-w-[100px] text-right">
-                  {formatCurrencyValue(milestoneAmount, currency)}
-                </div>
+                <div className="flex gap-2 items-center w-full md:w-auto">
+                  <div className="relative w-24">
+                    <input
+                      type="number"
+                      className={`w-full pr-6 pl-3 py-2 border rounded-xl text-sm focus:outline-none bg-white ${
+                        errors.terms?.[index]?.percentage ? 'border-red-300 focus:border-red-500' : 'border-slate-200 focus:border-groww-orange'
+                      }`}
+                      placeholder="50"
+                      {...register(`terms.${index}.percentage`, { valueAsNumber: true })}
+                    />
+                    <span className="absolute inset-y-0 right-3 flex items-center text-slate-400 text-xs font-semibold">%</span>
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  <div className="text-xs font-semibold text-slate-500 min-w-[100px] text-right">
+                    {formatCurrencyValue(milestoneAmount, currency)}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row justify-between gap-1 pl-0 md:pl-7">
+                {errors.terms?.[index]?.milestone && (
+                  <p className="text-red-500 text-[10px] font-semibold">{errors.terms[index].milestone.message}</p>
+                )}
+                {errors.terms?.[index]?.percentage && (
+                  <p className="text-red-500 text-[10px] font-semibold md:ml-auto">{errors.terms[index].percentage.message}</p>
+                )}
               </div>
             </div>
           );
