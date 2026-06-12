@@ -1,7 +1,7 @@
 export const formatCurrencyValue = (val, currencyCode) => {
-  const symbols = { INR: '₹', USD: '$', EUR: '€' };
+  const symbols = { INR: 'Rs.', USD: '$', EUR: '€' };
   const formatted = Number(val).toLocaleString(currencyCode === 'INR' ? 'en-IN' : 'en-US');
-  return `${symbols[currencyCode] || '₹'} ${formatted}`;
+  return `${symbols[currencyCode] || 'Rs.'} ${formatted}`;
 };
 
 export function generateQuotationNumber() {
